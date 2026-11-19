@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="QuickSo 水印相机，选择模板为照片添加经纬度、地址、时间、天气和备注，图片在浏览器本地处理。">
+  <meta name="theme-color" content="#ffffff">
+  <title>QuickSo 水印相机</title>
+  <link rel="icon" href="icon.jpg" type="image/jpeg">
+  <link rel="stylesheet" href="styles.css">
+  <script src="watermark.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m14-7-5-5-5 5m5-5v12"/></symbol>
+    <symbol id="download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/></symbol>
+    <symbol id="image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  </svg>
+  <header class="topbar">
+    <div class="brand"><a href="https://quickso.top/" aria-label="QuickSo 首页"><img src="icon.jpg" width="30" height="30" alt=""></a><h1>QuickSo 水印相机</h1></div>
+    <span class="local-badge">图片不上传</span>
+  </header>
+  <main class="workspace">
+    <section class="preview" aria-labelledby="preview-title">
+      <div class="section-head">
+        <h2 id="preview-title">照片预览</h2>
+        <label class="compare"><input id="original" type="checkbox" disabled> 查看原图</label>
+      </div>
+      <div class="stage" id="stage">
+        <div class="empty" id="empty">
+          <svg class="icon empty-icon" aria-hidden="true"><use href="#image"/></svg>
+          <button class="button primary" id="choose" type="button"><svg class="icon" aria-hidden="true"><use href="#upload"/></svg>选择照片</button>
+          <span>或拖入图片</span>
+        </div>
+        <canvas id="preview" aria-label="照片预览" role="img" hidden></canvas>
+      </div>
+      <div class="photo-bar">
+        <div class="photo-info"><strong id="file-name">尚未选择照片</strong><span id="dimensions"></span></div>
+        <button class="button" id="replace" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#upload"/></svg>更换照片</button>
+      </div>
+      <input id="file" type="file" accept="image/*,.heic,.heif" hidden>
+      <p class="status" id="status" role="status"></p>
+    </section>
+    <section class="editor" aria-labelledby="editor-title">
+      <div class="section-head">
+        <h2 id="editor-title">水印设置</h2>
+        <button class="text-button" id="example" type="button">填入示例</button>
+      </div>
+      <form id="settings">
+        <label class="template" for="watermark-template">水印模板
+          <select id="watermark-template"></select>
+        </label>
+        <fieldset class="template-panel" data-template-panel="yuandao-onsite" aria-label="模板参数">
+        <div class="fields">
+          <div class="pair">
+            <label>经度<input id="longitude" name="longitude" type="text" inputmode="decimal" maxlength="24" placeholder="例如 108.000000"></label>
+            <label>纬度<input id="latitude" name="latitude" type="text" inputmode="decimal" maxlength="24" placeholder="例如 34.000000"></label>
+          </div>
+          <label>坐标系<select id="system" name="system"><option value="">不显示</option><option value="WGS84坐标系">WGS84 坐标系</option><option value="GCJ-02坐标系">GCJ-02 坐标系</option><option value="BD-09坐标系">BD-09 坐标系</option></select></label>
+          <label>地址<textarea id="address" name="address" rows="2" maxlength="240" placeholder="输入地址"></textarea></label>
+          <div class="time-field">
+            <label>时间<input id="time" name="time" type="datetime-local" step="1"></label>
+            <button class="button icon-only" id="now" type="button" title="填入当前时间" aria-label="填入当前时间"><svg class="icon" aria-hidden="true"><use href="#clock"/></svg></button>
+          </div>
+          <label>海拔<input id="altitude" name="altitude" type="text" maxlength="24" placeholder="例如 370.3米"></label>
+          <div class="pair">
+            <label>天气<input id="weather" name="weather" type="text" maxlength="60" placeholder="例如 多云 4 ~ 12°C"></label>
+            <label>天气图标<select id="weather-icon" name="weatherIcon">
+              <option value="auto">自动识别</option>
+              <option value="sunny">晴</option>
+              <option value="partly-cloudy">多云</option>
+              <option value="cloudy">阴</option>
+              <option value="rain">雨</option>
+              <option value="thunder">雷阵雨</option>
+              <option value="snow">雪</option>
+              <option value="fog">雾</option>
+              <option value="none">不显示</option>
+            </select></label>
+          </div>
+          <label>备注<textarea id="note" name="note" rows="2" maxlength="160" placeholder="输入备注"></textarea></label>
+        </div>
+        <details class="appearance">
+          <summary>排版设置</summary>
+          <div class="appearance-fields">
+            <label class="range">字号 <output id="size-value" for="size">100%</output><input id="size" name="size" type="range" min="60" max="140" step="5" value="100"></label>
+            <label>中央水印<input id="center-mark" name="centerMark" type="text" maxlength="18" value="现场拍照" placeholder="留空不显示"></label>
+            <label>右下角水印<input id="signature" name="signature" type="text" maxlength="18" value="元道经纬相机" placeholder="留空不显示"></label>
+            <label class="compare"><input id="shade" name="shade" type="checkbox"> 底部压暗</label>
+          </div>
+        </details>
+        </fieldset>
+        <div class="export">
+          <label for="format" class="sr-only">下载格式</label>
+          <select id="format"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option></select>
+          <button class="button primary" id="save" type="button" disabled><svg class="icon" aria-hidden="true"><use href="#download"/></svg>下载照片</button>
+        </div>
+        <div class="result" id="result" hidden>
+          <a id="result-link" target="_blank" rel="noopener">打开生成的原图</a>
+          <p>手机可打开原图后长按保存。</p>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
